@@ -6,7 +6,7 @@ Ubuntu started compressing their kernels with LZ4 as of the 19.10 release, and n
 
 ## Who needs this
 
-This repository exists for people who are upgrading from an earlier version of Ubuntu and need the hook to have a bootable kernel, or just in case it helps anyone else.
+This repository exists for people who are upgrading from an earlier version of Ubuntu on a SiteHost VPS and need the hook to have a bootable kernel, or just in case it helps anyone else.
 
 ## Installation
 
