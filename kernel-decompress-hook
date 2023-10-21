@@ -32,13 +32,6 @@ trap "rm -f ${TEMP_FILE}" 0
 # If the given kernel file is still a bzimage see if its needs decompression
 if echo "$(file -b "${KERNEL_PATH}")" | grep -q "^Linux kernel x86 boot executable bzImage"; then
 
-        # Kernel is probably lz4 if there are lz4 headers in it
-        LZ4_HEADER="$(printf '\002!L\030')"
-        if ! grep -aqo "${LZ4_HEADER}" ${KERNEL_PATH}; then
-                echo "No lz4 compression headers found, skipping..."
-                exit 0
-        fi
-
         echo "Decompressing '${KERNEL_PATH}'..."
         # Extract the kernel and replace existing if successful
         if extract-vmlinux ${KERNEL_PATH} > ${TEMP_FILE}; then
