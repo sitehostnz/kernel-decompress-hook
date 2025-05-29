@@ -25,44 +25,28 @@ if [ ! -f "${KERNEL_PATH}" ]; then
         exit 1
 fi
 
-# Create a temp file
-TEMP_FILE=$(mktemp /tmp/decompress-kernel-XXXXX)
-trap "rm -f ${TEMP_FILE}" 0
-
-# If the given kernel file is still a bzimage see if its needs decompression
-if echo "$(file -b "${KERNEL_PATH}")" | grep -q "^Linux kernel x86 boot executable bzImage"; then
-
-        # Kernel is probably lz4 if there are lz4 headers in it
-        LZ4_HEADER="$(printf '\002!L\030')"
-        if ! grep -aqo "${LZ4_HEADER}" ${KERNEL_PATH}; then
-                echo "No lz4 compression headers found, skipping..."
-                exit 0
-        fi
-
-        echo "Decompressing '${KERNEL_PATH}'..."
-        # Extract the kernel and replace existing if successful
-        if extract-vmlinux ${KERNEL_PATH} > ${TEMP_FILE}; then
-
-                # Double check the kernel is a valid ELF image
-                if ! readelf -h ${TEMP_FILE} > /dev/null; then
-                        echo >&2 "Decompression of kernel file '${KERNEL_PATH}' failed!, not a valid ELF image"
-                        exit 1
-                fi
-
-                echo "Decompression of kernel file '${KERNEL_PATH}' successful"
-                cp -v ${TEMP_FILE} ${KERNEL_PATH}
-
-        else
-                echo >&2 "Decompression of kernel file '${KERNEL_PATH}' failed!"
-                exit 1
-        fi
-
-# Perhaps its already been decompressed
-elif echo "$(file -b "${KERNEL_PATH}")" | grep -q "^ELF 64-bit LSB executable"; then
-        echo "Kernel file '${KERNEL_PATH}' appears to be decompressed already. skipping"
-
-else
-        echo >&2 "Unable to determine the state of kernel file '${KERNEL_PATH}'"
-        exit 1
+# Check if already an ELF image
+if file -b "${KERNEL_PATH}" | grep -q "^ELF 64-bit LSB executable"; then
+    echo "Kernel file '${KERNEL_PATH}' appears to be decompressed already. Skipping."
+    exit 0
 fi
 
+# Create a temp file
+TEMP_FILE=$(mktemp /tmp/decompress-kernel-XXXXX)
+trap "rm -f ${TEMP_FILE}" EXIT
+
+# Extract the kernel and replace existing if successful
+echo "Attempting to decompress '${KERNEL_PATH}'..."
+if extract-vmlinux "${KERNEL_PATH}" > "${TEMP_FILE}"; then
+    if readelf -h "${TEMP_FILE}" > /dev/null; then
+        echo "Decompression successful, replacing original kernel file."
+        cp -v "${TEMP_FILE}" "${KERNEL_PATH}"
+        exit 0
+    else
+        echo >&2 "Decompression failed: not a valid ELF image."
+        exit 1
+    fi
+else
+    echo "No supported compression format detected or already uncompressed. Skipping."
+    exit 0
+fi
