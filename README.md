@@ -1,8 +1,8 @@
 # kernel-decompress-hook
 
-A Ubuntu kernel postinst hook which decompresses LZ4-compressed kernels.
+A Ubuntu kernel postinst hook which decompresses compressed kernels.
 
-Ubuntu started compressing their kernels with LZ4 as of the 19.10 release, and not all software yet supports that.
+Ubuntu started compressing their kernels as of the 19.10 release, and not all software yet supports that.
 
 ## Who needs this
 
